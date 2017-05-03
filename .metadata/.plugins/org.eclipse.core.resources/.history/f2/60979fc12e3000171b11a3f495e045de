@@ -1,0 +1,60 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class B implements Runnable {
+
+	@Override
+	public void run() {
+		try {
+			Connection connect;
+			
+			// Setup the connection with the DB
+			connect = DriverManager.getConnection("jdbc:sqlserver://localhost\\Supermarkt:1433;user=auser;password=123456");
+			// jdbc:sqlserver://[serverName[\instanceName][:portNumber]][;property=value[;property=value]]
+			
+			connect.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+			connect.setAutoCommit(false);
+			
+			Statement s = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+			Main.ausgabe(s, "SELECT 'B' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+			
+			int ueberweisungsbetrag = 5000;
+			
+			ResultSet rs = s.executeQuery("SELECT * FROM Konto WHERE KundenID = 3");
+			rs.next();
+			int saldo = rs.getInt("Saldo______");
+			saldo = saldo + ueberweisungsbetrag;
+			rs.updateInt("Saldo______", saldo);
+			rs.updateRow();
+			
+			rs = s.executeQuery("SELECT * FROM Konto WHERE KundenID = 1");
+			rs.next();
+			System.out.println("B: Sleep Start");
+			Thread.sleep(5000);
+			System.out.println("B: Sleep Ende");
+			saldo = rs.getInt("Saldo______");
+			int dispo = rs.getInt("Dispo______");
+			if ((saldo + dispo) < ueberweisungsbetrag) {
+				System.out.println("rollback von B");
+				connect.rollback();
+			} else {
+				System.out.println("commit von B");
+				saldo = saldo - ueberweisungsbetrag;
+				rs.updateInt("Saldo______", saldo);
+				rs.updateRow();
+				connect.commit();
+			}
+			
+			Main.ausgabe(s, "SELECT 'B' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+}
