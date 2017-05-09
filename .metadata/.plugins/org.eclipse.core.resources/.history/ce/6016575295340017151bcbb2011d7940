@@ -1,0 +1,54 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+public class B implements Runnable {
+
+	@Override
+	public void run() {
+		try {
+			Connection connect;
+
+			// Setup the connection with the DB
+			connect = DriverManager
+					.getConnection("jdbc:sqlserver://localhost\\Supermarkt:1433;user=auser;password=123456");
+			// jdbc:sqlserver://[serverName[\instanceName][:portNumber]][;property=value[;property=value]]
+
+			connect.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+			connect.setAutoCommit(false);
+
+			synchronized (System.out) {
+				Statement s = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				Main.ausgabe(s,
+						"SELECT 'B' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+
+				int ueberweisungsbetrag = 5000;
+
+				ResultSet rs = s.executeQuery("SELECT * FROM Konto WHERE KundenID = 1");
+				rs.next();
+				int saldo = rs.getInt("Saldo______");
+				saldo = saldo + ueberweisungsbetrag;
+				System.out.println("saldo1 in B: " + saldo);
+				System.out.notify();
+				System.out.wait(); // Muss nach notify
+				System.out.println("saldo2 in B: " + saldo);
+				System.out.println(rs.getInt("Saldo______"));
+				s.execute("UPDATE Konto SET Saldo______ = " + saldo + " WHERE KundenID = 1");
+				// rs.updateInt("Saldo______", saldo);
+				// rs.updateInt("Dispo______", 10);
+				// rs.updateRow();
+				connect.commit();
+
+				Main.ausgabe(s,
+						"SELECT 'B' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+
+				System.out.notify();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+}

@@ -1,22 +1,7 @@
 INDEX VERSION 1.127+C:\Users\anwender\git\Datenbankprogrammierung\.metadata\.plugins\org.eclipse.jdt.core
-3666609613.index
-922380862.index
-4265864773.index
-3698447926.index
-848469205.index
-1484906476.index
-628019425.index
-1477788888.index
 2787935019.index
-148409970.index
-194259052.index
-3620471903.index
-1689259093.index
-2709225165.index
-648612256.index
-1395868342.index
+3851007427.index
 185683519.index
-559129880.index
-2272273464.index
 205787460.index
-2470519452.index
+1278439808.index
+176277445.index

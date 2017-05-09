@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename Java project &apos;Copy of Transaktionen-PhantomRead&apos; to &apos;Transaktionen-PhantomRead&apos;&#x0D;&#x0A;- Original element: &apos;Copy of Transaktionen-PhantomRead&apos;&#x0D;&#x0A;- Renamed element: &apos;Copy of Transaktionen-PhantomRead&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename Java project &apos;Copy of Transaktionen-PhantomRead&apos;" flags="7" id="org.eclipse.jdt.ui.rename.java.project" input="=Copy of Transaktionen-PhantomRead" name="Transaktionen-PhantomRead" references="true" stamp="1494316444982" version="1.0"/>
+</session>
