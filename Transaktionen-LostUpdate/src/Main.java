@@ -15,7 +15,7 @@ public class Main {
 
 		// Transaction Isolation Level (sonst heult er rum)
 		// Serializable nie in der Realität (schlechte Performance)
-		connect.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+		connect.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 		connect.setAutoCommit(false);
 
 		setUpDatabase(connect);

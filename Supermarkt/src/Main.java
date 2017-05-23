@@ -36,6 +36,13 @@ public class Main {
 		ausgabe(s, "SELECT * FROM Artikel");
 
 		Statement s2 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		/*
+		 * Wenn das ResultSet nicht updatable ist, kann man es nicht aktualisieren
+		 * 
+		 * Fehlermeldung:
+		 * 		-  com.microsoft.sqlserver.jdbc.SQLServerException: Das Resultset kann nicht aktualisiert werden.
+		 */
+		// Statement s2 = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		ResultSet rs2 = s2.executeQuery("SELECT * FROM Artikel");
 
 		ResultSet rs = s.executeQuery("SELECT * FROM Artikel");
@@ -47,20 +54,34 @@ public class Main {
 		s.execute("INSERT INTO Artikel (Bezeichnung, Preis, Anzahl) VALUES('Wurst', 1.50, 100)");
 		s.execute("INSERT INTO Artikel (Bezeichnung, Preis, Anzahl) VALUES('Schachtel Zigaretten', 7.00, 100)");
 
+		/*
+		 * Wenn man ein Leerzeichen vergisst kommt eine Fehlermeldung
+		 * 
+		 * Fehlermeldung:
+		 * 		-  com.microsoft.sqlserver.jdbc.SQLServerException: Falsche Syntax in der Nähe von 'Artikel'.
+		 */
 		ausgabe(s,
-				"SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis, SUM(Anzahl) AS Anzahl FROM Artikel GROUP BY Preis");
+				"SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis, SUM(Anzahl) AS Anzahl "
+				+ "FROM Artikel GROUP BY Preis");
 		ausgabe(rs2);
 
-		// Geht nicht, da keine Data Source Table (TemporÃ¤re Ergebnistabelle)
-		// Bei Insert geht der Rotz auch nicht
-		// rs = s.executeQuery("SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis,
-		// SUM(Anzahl) AS Anzahl FROM Artikel GROUP BY Preis");
-		// rs.next();
-		// rs.updateString(2, "1.25");
-		// rs.updateRow();
-		//
-		// ausgabe(s, "SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis,
-		// SUM(Anzahl) AS Anzahl FROM Artikel GROUP BY Preis");
+		/*
+		 * Geht nicht, da keine Data Source Table (TemporÃ¤re Ergebnistabelle):
+		 *		- Im SELECT wurden Aggregatfunktionen genutzt, daher weiß SQL-Server bei einem Update dann nicht,
+		 *		  welche konkrete Zeile in der Datenbank er updaten soll
+		 * Fehlermeldung:
+		 *		- com.microsoft.sqlserver.jdbc.SQLServerException: Der Cursor ist schreibgeschützt (READ ONLY).
+		 * Weitere Hinweise:
+		 *		- Bei Insert geht der Rotz auch nicht
+		 */
+//		 rs = s.executeQuery("SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis, "
+//		 		+ "SUM(Anzahl) AS Anzahl FROM Artikel GROUP BY Preis");
+//		 rs.next();
+//		 rs.updateString(2, "1.25");
+//		 rs.updateRow();
+//		
+//		 ausgabe(s, "SELECT COUNT(ArtikelID) AS AnzahlArtikel, Preis, "
+//		 		+ "SUM(Anzahl) AS Anzahl FROM Artikel GROUP BY Preis");
 
 		rs = s.executeQuery("SELECT ArtikelID, Bezeichnung, Preis, Anzahl FROM Artikel");
 		rs.moveToInsertRow();
@@ -82,7 +103,12 @@ public class Main {
 		ausgabe(s, "SELECT * FROM Artikel");
 
 		PreparedStatement ps = connect.prepareStatement("SELECT * FROM Artikel WHERE Bezeichnung = ?");
-		ps.setString(0, "");
+		/* Bei Prepared Statements immer mit Index 1 anfangen
+		 * Fehlermeldung:
+		 * 		-  com.microsoft.sqlserver.jdbc.SQLServerException: Der Index "0" liegt außerhalb des gültigen Bereichs.
+		 */
+		//ps.setString(0, name);
+		ps.setString(1, name);
 	}
 
 	private static void ausgabe(Statement s, String query) throws SQLException {

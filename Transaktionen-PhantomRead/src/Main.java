@@ -31,12 +31,12 @@ public class Main {
 			
 			System.out.notify();
 			System.out.wait();
-			
+			System.out.println("A rennt los");
 			rs = s.executeQuery("SELECT Saldo______ FROM Konto WHERE Name LIKE '%Dividende%'");
 			rs.next();
 			Double divKohle = rs.getDouble("Saldo______");
 			Double divKohlePP = divKohle/anzPers;
-			
+
 			s.execute("UPDATE Konto SET Saldo______ = 0 WHERE Name LIKE '%Dividende%'");
 			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Konto Kt");
 			s.execute("UPDATE Konto SET Saldo______ = Saldo______ + " + divKohlePP + " WHERE Name NOT LIKE '%Dividende%'");
