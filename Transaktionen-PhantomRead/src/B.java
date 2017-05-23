@@ -23,6 +23,7 @@ public class B implements Runnable {
 				System.out.println("Jetzt kommt Donald");
 				s.execute("INSERT INTO Konto(Kontonummer, Name, Saldo______) VALUES (4, 'Donald the great', 0)");
 				System.out.println("Donald ist drin");
+				s.getConnection().commit();
 				
 				System.out.notify();
 				System.out.wait();

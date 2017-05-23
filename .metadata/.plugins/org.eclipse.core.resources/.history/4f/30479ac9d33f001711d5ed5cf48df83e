@@ -15,31 +15,32 @@ public class Main {
 
 		// Transaction Isolation Level (sonst heult er rum)
 		// Serializable nie in der Realität (schlechte Performance)
-		connect.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+		connect.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 		connect.setAutoCommit(false);
 
 		setUpDatabase(connect);
 		synchronized (System.out) {
 			new Thread(new B()).start();
-
+			
 			Statement s = connect.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Konto Kt");
 
-			int ueberweisungsbetrag = 3000;
-
-			ResultSet rs = s.executeQuery("SELECT * FROM Konto WHERE KundenID = 1");
+			ResultSet rs = s.executeQuery("SELECT COUNT(*) AS AnzPers FROM Konto WHERE Name NOT LIKE '%Dividende%'");
 			rs.next();
-			int saldo = rs.getInt("Saldo______");
-			System.out.wait();
-			System.out.println("A ist wieder am Start");
-			saldo = saldo + ueberweisungsbetrag;
-			rs.updateInt("Saldo______", saldo);
-			rs.updateRow();
-			connect.commit();
-
-			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Kunden Kd, Konto Kt " + "WHERE Kd.KundenID = Kt.KundenID");
+			int anzPers = rs.getInt("AnzPers");
+			
 			System.out.notify();
 			System.out.wait();
+			System.out.println("A rennt los");
+			rs = s.executeQuery("SELECT Saldo______ FROM Konto WHERE Name LIKE '%Dividende%'");
+			rs.next();
+			Double divKohle = rs.getDouble("Saldo______");
+			Double divKohlePP = divKohle/anzPers;
+
+			s.execute("UPDATE Konto SET Saldo______ = 0 WHERE Name LIKE '%Dividende%'");
+			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Konto Kt");
+			s.execute("UPDATE Konto SET Saldo______ = Saldo______ + " + divKohlePP + " WHERE Name NOT LIKE '%Dividende%'");
+			ausgabe(s, "SELECT 'A' as Thread, * " + "FROM Konto Kt");
 		}
 	}
 
@@ -52,34 +53,32 @@ public class Main {
 			System.out.println("dicker Patzer!");
 			e.printStackTrace();
 		}
-		try {
-			s.execute("DROP TABLE Produkte");
+		s.execute(
+				"CREATE TABLE Konto(Kontonummer int primary key, Name VARCHAR(255), Saldo______ decimal(10,2))");
+		s.execute(
+				"INSERT INTO Konto(Kontonummer, Name, Saldo______) VALUES (1, 'Dividenden', 1200.00), (2, 'Enking', 200), (3, 'Peters', 3.56)");
+		s.execute("CREATE TRIGGER trigger_sum "
+				+ "ON Konto   "
+				+ "AFTER   "
+				+ "	INSERT, UPDATE   "
+				+ "AS "
+				+ "	IF EXISTS( "
+				+ "		SELECT * "
+				+ "		FROM (SELECT SUM(Saldo______) AS Summe "
+				+ "			FROM Konto) AS Tab "
+				+ "		WHERE Summe > 1403.56)"
+				+ "	BEGIN"
+				+ "		RAISERROR ('Constraint verletzt', 16, 1);"
+				+ "		ROLLBACK TRANSACTION;  "
+				+ "		RETURN"
+				+ "	END;");
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			s.execute("DROP TABLE Kunden");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		s.execute("CREATE TABLE Kunden (KundenID int primary key, Bezeichnung VARCHAR(50))");
-		s.execute("CREATE TABLE Produkte(ProduktID int primary key, Bezeichnung varchar(50))");
-		s.execute(
-				"CREATE TABLE Konto(Kontonummer int primary key, ProduktID int foreign key references Produkte(ProduktID), KundenID int foreign key references Kunden(KundenID), Saldo______ decimal(10,2), Dispo______ decimal(10,2))");
-
-		s.execute(
-				"INSERT INTO Kunden (KundenID, Bezeichnung) VALUES (1, 'Lord Jens'), (2, 'Sir Hans Peter'), (3, 'Herzogin Dumpfbacke'), (4, 'Sultan Dieter')");
-		s.execute(
-				"INSERT INTO Produkte(ProduktID, Bezeichnung) VALUES (1, 'GiroSparPremiumPlus'), (2, 'CreditPremium'), (3, 'CardPlus'), (4, 'Gewinnsparen')");
-		s.execute(
-				"INSERT INTO Konto(Kontonummer, ProduktID, KundenID, Saldo______, Dispo______) VALUES (1, 1, 1, 100.0, 200.0), (2, 2, 2, 300, 10), (3, 3, 3, 500.12, 1.40), (4, 4, 4, 1000.26, 600)");
 		s.getConnection().commit();
 	}
 
 	public static void ausgabe(Statement s, String query) throws SQLException {
 		synchronized (System.out) {
+			System.out.println(query);
 			ResultSet rs = s.executeQuery(query);
 
 			for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
